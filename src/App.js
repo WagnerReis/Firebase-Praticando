@@ -6,59 +6,78 @@ export default class App extends Component{
   constructor(props){
     super(props);
     this.state = {
-      nome: '',
       email: '',
-      senha: 
-      ''
+      senha: '',
+      user: null
     };
     this.cadastrar = this.cadastrar.bind(this);
+    this.logar = this.logar.bind(this);
+    this.auth = this.auth.bind(this);
+    this.sair = this.sair.bind(this);
+  }
 
-    firebase.auth().signOut();
+  componentDidMount(){
+    this.auth();
+  }
 
-    firebase.auth().onAuthStateChanged((user) => {
+  auth(){
+    firebase.auth().onAuthStateChanged((user)=>{
       if(user){
-        firebase.database().ref('usuarios').child(user.uid).set({
-          nome: this.state.nome
-        })
-        .then(() => {
-          this.setState({nome: '', email: '', senha: ''})
-        });
+        this.setState({user: user});
       }
     })
   }
 
-  cadastrar(e) {
+  cadastrar() {
 
     firebase.auth().createUserWithEmailAndPassword(this.state.email, this.state.senha)
     .catch((error) => {
           alert('Codigo de error: ' + error.code)
-    })
+    });
+  }
 
-    e.preventDefault();
+  logar(){
+    firebase.auth().signInWithEmailAndPassword(this.state.email, this.state.senha)
+    .catch((error) => {
+          alert('Codigo de error: ' + error.code)
+    });
+  }
+
+  sair(){
+    firebase.auth().signOut()
+    .then(() => {
+      this.setState({user: null});
+    })
+    ;
   }
 
 
   render() {
     return (
       <div>
-        <h1>Novo Usuario</h1>
-        <form onSubmit={(e) => {this.cadastrar(e)}}>
+        {this.state.user ? 
+        <div>
+          <p>Painel Admin</p>
+          <p>Seja bem vindo :)</p>
+          <p>{this.state.user.email}</p>
+          <p>{this.state.user.uid}</p>
+          <button onClick={this.sair}>Sair</button>
+        </div>
+        : 
+          <div>
+            <h1>Seja bem vindo</h1>
+            <label>Email: </label><br />
+            <input type="text" value={this.state.email}
+              onChange={(e) => this.setState({ email: e.target.value })} /><br />
 
-        <label>Nome: </label><br />
-          <input type="text" value={this.state.nome}
-            onChange={(e) => this.setState({ nome: e.target.value })} /><br />
+            <label>Senha: </label><br />
+            <input type="text" value={this.state.senha}
+              onChange={(e) => this.setState({ senha: e.target.value })} /><br />
 
-
-          <label>Email: </label><br />
-          <input type="text" value={this.state.email}
-            onChange={(e) => this.setState({ email: e.target.value })} /><br />
-
-          <label>Senha: </label><br />
-          <input type="text" value={this.state.senha}
-            onChange={(e) => this.setState({ senha: e.target.value })} /><br />
-
-          <button type="submit">Cadastrar</button>
-        </form>
+            <button onClick={this.cadastrar}>Cadastrar</button>
+            <button onClick={this.logar}>Logar</button>
+          </div>
+          }
 
       </div>
     );
